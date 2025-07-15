@@ -72,7 +72,7 @@
   <div class="container">
     <p>Enter your target location:</p>
     <input id="target-location" type="text" placeholder="Search for a location" />
-    <button onclick="searchLocation()">Set Alarm</button>
+    <button id="alarm-btn" onclick="handleAlarmButton()">Set Alarm</button>
 
     <div id="status" class="alarm-inactive">No alarm is active.</div>
     <div id="alarm-location"></div>
@@ -84,9 +84,12 @@
 
   <script>
   let map, currentMarker, targetMarker, targetCoords = null;
+  let alarmActive = false;
+  let alarmTriggered = false;
+
 
   function initMap() {
-    console.log("🗺Map init triggered");
+    console.log("🗺️ Map init triggered");
     map = L.map('map').setView([20, 78], 5);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -94,13 +97,13 @@
     }).addTo(map);
 
     if (!navigator.geolocation) {
-      alert(" Geolocation is not supported by your browser.");
+      alert("❌ Geolocation is not supported by your browser.");
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("Got position", position);
+        console.log("✅ Got position", position);
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         map.setView([lat, lng], 13);
@@ -115,7 +118,7 @@
         startTracking();
       },
       (err) => {
-        alert("Geolocation error: " + err.message);
+        alert("❌ Geolocation error: " + err.message);
         console.error("Geolocation error:", err);
       }
     );
@@ -134,7 +137,7 @@
     .then(res => res.json())
     .then(data => {
       if (!data || data.length === 0) {
-        alert("Location not found ❌ ");
+        alert("❌ Location not found.");
         return;
       }
 
@@ -152,10 +155,15 @@
 
       map.setView([targetCoords.lat, targetCoords.lng], 13);
 
-      document.getElementById("alarm-location").textContent =
-        `Alarm Set For: ${loc.display_name}`;
-      document.getElementById("status").textContent = "Alarm is active!";
-      document.getElementById("status").className = "alarm-active";
+        document.getElementById("alarm-location").textContent =
+          `Alarm Set For: ${loc.display_name}`;
+        document.getElementById("status").textContent = "Alarm is active!";
+        document.getElementById("status").className = "alarm-active";
+        
+        document.getElementById("alarm-btn").textContent = "Stop Alarm";
+        alarmActive = true;
+        alarmTriggered = false;
+
     });
   }
 
@@ -178,13 +186,49 @@
         const distance = haversineDistance(userPos, targetCoords);
         console.log("Distance to target:", distance.toFixed(3), "km");
 
-        if (distance <= 0.5) {
-          document.getElementById("status").textContent = "You've reached your destination!";
-          document.getElementById("alarm-sound").play();
+      if (!alarmTriggered && targetCoords && distance <= 0.5) {
+        alarmTriggered = true;
+        document.getElementById("status").textContent = "You've reached you destination!";
+        document.getElementById("alarm-sound").play();
         }
+
       }
     });
   }
+  function stopAlarm() {
+  const alarmSound = document.getElementById("alarm-sound");
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
+
+  //erest state
+  targetCoords = null;
+  alarmActive = false;
+  alarmTriggered = false;
+
+  //reset UI
+  document.getElementById("status").textContent = "No alarm is active.";
+  document.getElementById("status").className = "alarm-inactive";
+  document.getElementById("alarm-btn").textContent = "Set Alarm";
+  document.getElementById("alarm-location").textContent = "";
+
+  
+  if (targetMarker) {
+    map.removeLayer(targetMarker);
+    targetMarker = null;
+  }
+}
+
+
+
+  function stopAlarm() {
+  const alarmSound = document.getElementById("alarm-sound");
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
+
+  document.getElementById("status").textContent = "Alarm was stopped.";
+  document.getElementById("status").className = "alarm-inactive";
+  document.getElementById("stop-alarm-btn").style.display = "none";
+}
 
   function haversineDistance(coords1, coords2) {
     const toRad = (x) => (x * Math.PI) / 180;
@@ -196,8 +240,15 @@
               Math.sin(dLng / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+  }
+  function handleAlarmButton() {
+      if (!alarmActive) {
+        searchLocation();
+      } else {
+        stopAlarm(); //cancel or stop alarm
+      }
+    }
 
-                             }
   window.addEventListener("load", initMap);
 </script>
 
