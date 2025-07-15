@@ -78,7 +78,6 @@
 <script>
 let map, infoWindow, targetCoords = null;
 
-// Initialize Google Maps and Autocomplete
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: -34.397, lng: 150.644 },
@@ -87,7 +86,6 @@ function initMap() {
 
   infoWindow = new google.maps.InfoWindow();
 
-  // Fetch and display user's current location
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -108,7 +106,6 @@ function initMap() {
     handleLocationError(false, infoWindow, map.getCenter());
   }
 
-  // Initialize autocomplete for target location
   const input = document.getElementById("target-location");
   const autocomplete = new google.maps.places.Autocomplete(input);
 
@@ -121,11 +118,9 @@ function initMap() {
 
     targetCoords = place.geometry.location;
 
-    // Show the selected alarm location
     document.getElementById("alarm-location").textContent =
       `Alarm Set For Location: ${place.name || place.formatted_address}`;
     
-    // Add marker on the map
     new google.maps.Marker({
       position: targetCoords,
       map,
@@ -151,7 +146,6 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
   infoWindow.open(map);
 }
 
-// Start tracking user's position and check distance to target
 function startTracking() {
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition((position) => {
@@ -166,7 +160,7 @@ function startTracking() {
         const distance = haversineDistance(currentPos, targetCoords);
 
        
-        if (distance <= 0.5) { // Trigger alarm if within 500 meters
+        if (distance <= 0.5) {
           document.getElementById("status").textContent =
             "You have reached your destination!";
           document.getElementById("alarm-sound").play();
@@ -176,10 +170,9 @@ function startTracking() {
   }
 }
 
-// Haversine formula to calculate distance between two points
 function haversineDistance(coords1, coords2) {
   const toRad = (x) => (x * Math.PI) / 180;
-  const R = 6371; // Radius of Earth in km
+  const R = 6371;
   const dLat = toRad(coords2.lat() - coords1.lat);
   const dLng = toRad(coords2.lng() - coords1.lng);
   const a =
@@ -189,14 +182,12 @@ function haversineDistance(coords1, coords2) {
       Math.sin(dLng / 2) *
       Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
+  return R * c;
 }
 
-// Initialize map
 initMap();
 </script>
 
-<!-- Include Google Maps API -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=...&libraries=places&callback=initMap"></script>
 </body>
 </html>
